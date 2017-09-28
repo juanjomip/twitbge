@@ -12,12 +12,14 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.EditText;
 import android.widget.Button;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.UUID;
+
 import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -48,6 +50,7 @@ import com.google.android.gms.common.api.GoogleApiClient;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -63,6 +66,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+
 import okhttp3.Call;
 import okhttp3.FormBody;
 import okhttp3.MediaType;
@@ -71,91 +75,114 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import okio.BufferedSink;
+
 import java.io.IOException;
 
 /* Clase Main del software.*/
 public class GPS extends ActionBarActivity implements LocationListener {
-    // Location list, PROBABLEMENTE Hay que eliminarla
-    List<Map<String, String>> locationList = new ArrayList<>();
+
+    // Variables de configuración.
     public static final int MY_PERMISSIONS = 0;
 
-    // Inputs gráficos.
+    /* Inputs gráficos.*/
+
+    // Representa el estado de la aplicación (Capturando, Detenido)
+    private TextView status;
+
+    // Switch de Iniciar Captura y Terminar Captura.
     private Switch mySwitch;
-    private TextView samplesSize;
-    private TextView locationSize;
-    private TextView matchedSize;
+
+    // Label donde se muestra el valor de los niveles de la última muestra.
+    private TextView niveles;
+
+    // Label donde se muestra la hora de la ultima muestra.
+    private TextView fechahora;
+
+    // Label donde se muestra el timestamp
+    private TextView timestamp;
+
+    // Label donde se muestra la latitud de la ultima muestra.
     private TextView lat;
+
+    // Label donde se muestra la longitud de la ultima muestra.
     private TextView lng;
-    private TextView txtGps;
-    private TextView datetime;
-    private Switch switch_ubicacion;
 
-    public String muestraBT;
-    public double muestraGPSlng;
-    public double muestraGPSlat;
-    public long muestraGPStime;
-    // Gps.
+    /* Variables para GPS*/
+
+    // Location manager.
     public LocationManager handle;
+
+    // Provider.
     private String provider;
-    BluetoothAdapter mBluetoothAdapter;
-    BluetoothSocket mmSocket;
-    //BluetoothDevice mmDevice;
-    //OutputStream mmOutputStream;
-    //InputStream mmInputStream;
-    //Thread workerThread;
-    BluetoothDevice mmDevice;
-    OutputStream mmOutputStream;
-    InputStream mmInputStream;
-    Thread workerThread;
-    byte[] readBuffer;
-    int readBufferPosition;
-    int counter;
-    volatile boolean stopWorker;
 
-    SamplesManager samplesManager = new SamplesManager();
-
-    // CONSTANTES
-    private static final int MIN_TIME_COORDS = 15;
+    // Tiempo entre captura de coordenadas (15 sec).
+    private static final int MIN_TIME_GPS = 15000;
     /**
      * ATTENTION: This was auto-generated to implement the App Indexing API.
      * See https://g.co/AppIndexing/AndroidStudio for more information.
      */
     private GoogleApiClient client2;
+    // Ultima posición obtenida (LAT).
+    public double muestraGPSLat;
+
+    // Ultima posición obtenida (LNG).
+    public double muestraGPSLng;
+
+    // Ultima posición obtenida (DATETIME).
+    public double muestraGPSDatetime;
+
+    // Ultima posición obtenida (TIMESTAMP).
+    public double muestraGPSTimestamp;
+
+    /* Variables para Bluetooth*/
+
+    // Adapter.
+    BluetoothAdapter mBluetoothAdapter;
+
+    // Socket.
+    BluetoothSocket mmSocket;
+
+    // Device.
+    BluetoothDevice mmDevice;
+
+    // Output.
+    OutputStream mmOutputStream;
+
+    // Input.
+    InputStream mmInputStream;
+
+    // Thread.
+    Thread workerThread;
+
+    // Read Buffer.
+    byte[] readBuffer;
+
+    // Read BufferPosition.
+    int readBufferPosition;
+
+    // stopWorker.
+    volatile boolean stopWorker;
+    /* Variables generales.*/
+
+    // Ultima muestra Bluetooth recibida.
+    public String ultimaMuestraBT;
 
     /* Método que se ejecuta al iniciar la aplicación. */
     protected void onCreate(Bundle savedInstanceState) {
-        // Inicialización.
+
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_gps);
+
         // Inputs
-        txtGps = (TextView) findViewById(R.id.proveedor);
         mySwitch = (Switch) findViewById(R.id.switch_ubicacion);
         lat = (TextView) findViewById(R.id.lat);
         lng = (TextView) findViewById(R.id.lng);
-        datetime = (TextView) findViewById(R.id.datetime);
-        locationSize = (TextView) findViewById(R.id.locationsSize);
-        samplesSize = (TextView) findViewById(R.id.SamplesSize);
-        matchedSize = (TextView) findViewById(R.id.MatchedSize);
-        samplesManager = new SamplesManager();
-        samplesManager.defaultList();
+        fechahora = (TextView) findViewById(R.id.datetime);
+        // pendiente agregar niveles.
 
-
-        try {
-            AssetManager assets = getAssets();
-            samplesManager.readSamplesFile(assets);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        AssetManager assets = getAssets();
-        /*try {
-            //readChordinatesFile(assets);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }*/
-
+        // Controla el estado del Switch.
         mySwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 try {
@@ -167,6 +194,7 @@ public class GPS extends ActionBarActivity implements LocationListener {
                 }
             }
         });
+
         // ATTENTION: This was auto-generated to implement the App Indexing API.
         // See https://g.co/AppIndexing/AndroidStudio for more information.
         client2 = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
@@ -181,10 +209,7 @@ public class GPS extends ActionBarActivity implements LocationListener {
         }
     }
 
-    /* Inicia el servicio de captura de coordenadas.
-     * Inicia la conexión Bluetooth */
-    public void IniciarServicio() throws IOException {
-
+    public void IniciarConexionBT() throws IOException {
         /* Verifica si el dispositivo es compatible con Bluetooth. */
         BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (mBluetoothAdapter == null) {
@@ -218,16 +243,21 @@ public class GPS extends ActionBarActivity implements LocationListener {
         mmOutputStream = mmSocket.getOutputStream();
         mmInputStream = mmSocket.getInputStream();
         beginListenForData();
+    }
 
-        //int time = (int) (System.currentTimeMillis());
-        //String timeString = Integer.toString(time);
+    /* Inicia el servicio de captura de coordenadas.
+     * Inicia la conexión Bluetooth */
+    public void IniciarServicio() throws IOException {
+
+        // se sincroniza arduino generando un Datetime y enviandolo.
         Calendar ca = Calendar.getInstance();
-
         SimpleDateFormat df = new SimpleDateFormat("yyyy,MM,dd,HH,mm,ss");
         String formattedDate = df.format(ca.getTime());
         System.out.println("INICIO:" + formattedDate);
+
         write(formattedDate);
 
+        // Se inicia la captura de coordenadas.
         //Toast.makeText(this, "Iniciado", Toast.LENGTH_SHORT).show();
         // Configura el Handler para la captura de coordenadas GPS.
         handle = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
@@ -264,14 +294,15 @@ public class GPS extends ActionBarActivity implements LocationListener {
                     MY_PERMISSIONS);
         } else {
             provider = handle.getBestProvider(c, true);
-            txtGps.setText("Proveedor:" + provider);
+            //txtGps.setText("Proveedor:" + provider);
 
-            handle.requestLocationUpdates(provider, 5000, 0, this);
+            handle.requestLocationUpdates(provider, MIN_TIME_GPS, 0, this);
             Location location = handle.getLastKnownLocation(provider);
+
+            // Cuando se obtiene una nueva coordenada se almacena en las variables de coordenadas.
             this.onLocationChanged(location);
             MuestraPosicionActual(location);
         }
-
         //txtGps.setText(String.valueOf(permissionCheck));
 
 
@@ -335,8 +366,8 @@ public class GPS extends ActionBarActivity implements LocationListener {
 
                                     handler.post(new Runnable() {
                                         public void run() {
-                                            locationSize.setText(data);
-                                            muestraBT = data;
+                                            //locationSize.setText(data);
+                                            ultimaMuestraBT = data;
                                             //System.out.println("llegó");
                                             //System.out.println("nueva BT:" + muestraBT);
                                             try {
@@ -379,6 +410,16 @@ public class GPS extends ActionBarActivity implements LocationListener {
 
 
     public void PararServicio() throws ParseException {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
         handle.removeUpdates(this);
         lat.setText("Detenido");
         lng.setText("Detenido");
@@ -387,8 +428,8 @@ public class GPS extends ActionBarActivity implements LocationListener {
     }
 
     public void unirMuestras() throws IOException {
-        System.out.println(muestraBT);
-        List<String> inputBT = Arrays.asList(muestraBT.split(","));
+        System.out.println(ultimaMuestraBT);
+        List<String> inputBT = Arrays.asList(ultimaMuestraBT.split(","));
 
         String tmp = inputBT.get(0);
         int muestraBTTime = Integer.parseInt(tmp);

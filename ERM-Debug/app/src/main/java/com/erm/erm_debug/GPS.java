@@ -81,40 +81,32 @@ import java.io.IOException;
 /* Clase Main del software.*/
 public class GPS extends ActionBarActivity implements LocationListener {
 
-    // Variables de configuración.
+    // Variables de configuración******************************************************************.
     public static final int MY_PERMISSIONS = 0;
 
-    /* Inputs gráficos.*/
+    /* Inputs gráficos.****************************************************************************/
 
     // Representa el estado de la aplicación (Capturando, Detenido)
     private TextView status;
-
     // Switch de Iniciar Captura y Terminar Captura.
     private Switch mySwitch;
-
     // Label donde se muestra el valor de los niveles de la última muestra.
     private TextView niveles;
-
     // Label donde se muestra la hora de la ultima muestra.
     private TextView fechahora;
-
     // Label donde se muestra el timestamp
     private TextView timestamp;
-
     // Label donde se muestra la latitud de la ultima muestra.
     private TextView lat;
-
     // Label donde se muestra la longitud de la ultima muestra.
     private TextView lng;
 
-    /* Variables para GPS*/
+    /* Variables para GPS**************************************************************************/
 
     // Location manager.
     public LocationManager handle;
-
     // Provider.
     private String provider;
-
     // Tiempo entre captura de coordenadas (15 sec).
     private static final int MIN_TIME_GPS = 15000;
     /**
@@ -124,45 +116,35 @@ public class GPS extends ActionBarActivity implements LocationListener {
     private GoogleApiClient client2;
     // Ultima posición obtenida (LAT).
     public double muestraGPSLat;
-
     // Ultima posición obtenida (LNG).
     public double muestraGPSLng;
-
     // Ultima posición obtenida (DATETIME).
     public double muestraGPSDatetime;
-
     // Ultima posición obtenida (TIMESTAMP).
     public double muestraGPSTimestamp;
 
-    /* Variables para Bluetooth*/
+    /* Variables para Bluetooth********************************************************************/
 
     // Adapter.
     BluetoothAdapter mBluetoothAdapter;
-
     // Socket.
     BluetoothSocket mmSocket;
-
     // Device.
     BluetoothDevice mmDevice;
-
     // Output.
     OutputStream mmOutputStream;
-
     // Input.
     InputStream mmInputStream;
-
     // Thread.
     Thread workerThread;
-
     // Read Buffer.
     byte[] readBuffer;
-
     // Read BufferPosition.
     int readBufferPosition;
-
     // stopWorker.
     volatile boolean stopWorker;
-    /* Variables generales.*/
+
+    /* Variables generales.************************************************************************/
 
     // Ultima muestra Bluetooth recibida.
     public String ultimaMuestraBT;
@@ -435,8 +417,9 @@ public class GPS extends ActionBarActivity implements LocationListener {
         int muestraBTTime = Integer.parseInt(tmp);
         muestraBTTime = muestraBTTime + 86400;
         System.out.println("BTTIME:" + muestraBTTime);
-        long resultado = muestraBTTime - muestraGPStime;
+        //long resultado = muestraBTTime - muestraGPSTimestamp;
 
+        long resultado = 12;
         String time = String.valueOf(muestraBTTime);
         long timestampLong = Long.parseLong(time)*1000;
         Date d = new Date(timestampLong);
@@ -460,7 +443,9 @@ public class GPS extends ActionBarActivity implements LocationListener {
         //System.out.println("Timestampt BT:" + inputBT.get(0));
 
         // lat, lng, date, value
-        String params = String.valueOf(muestraGPSlat) + "|" + String.valueOf(muestraGPSlng) + "|" + formattedDate + "|" + inputBT.get(1) ;
+        //String params = String.valueOf(muestraGPS   lat) + "|" + String.valueOf(muestraGPSlng) + "|" + formattedDate + "|" + inputBT.get(1) ;
+        String params;
+        params = "asda";
         System.out.println(params);
 
         if(Math.abs(resultado) < 30 && resultado > 0) {
@@ -488,11 +473,11 @@ public class GPS extends ActionBarActivity implements LocationListener {
             lng.setText("Lng Desconocida");
         } else {
 
-            muestraGPStime = System.currentTimeMillis() / 1000;
-            muestraGPSlat = location.getLatitude();
-            muestraGPSlng = location.getLongitude();
+            muestraGPSTimestamp = System.currentTimeMillis() / 1000;
+            muestraGPSLat = location.getLatitude();
+            muestraGPSLng = location.getLongitude();
 
-            System.out.println("nueva GPS:" + muestraGPStime);
+            System.out.println("nueva GPS:" + muestraGPSTimestamp);
 
 
             lat.setText("asdas");
@@ -508,38 +493,38 @@ public class GPS extends ActionBarActivity implements LocationListener {
             map.put("datetime", formattedDate);
 
             // Agregamos la matriz a nuestra lista que contiene todas las coordenadas.
-            locationList.add(map);
+            //locationList.add(map);
 
             // Si hay alguna muestra y hay 10 o más coordenadas se hace el match.
             //System.out.println(String.valueOf(samplesManager.getSizeOfSamples()) + " wait " + String.valueOf(locationList.size()));
-            if (samplesManager.getSizeOfSamples() > 0 && locationList.size() >= 1) {
+            //if (sam.getSizeOfSamples() > 0 && locationList.size() >= 1) {
                 /*try {
                     //samplesManager.makeMatch(locationList);
                 } catch (ParseException e) {
                     e.printStackTrace();
                 }*/
-            }
+            //}
             // Si hay muchas coordenadas y aún no hay samples se limpia la lista de coordenadas.
-            else if (locationList.size() >= 50) {
-                Toast.makeText(this, "Limpiando exceso de coordenadas", Toast.LENGTH_SHORT).show();
-                this.clearList();
-            }
+            //else if (locationList.size() >= 50) {
+              //  Toast.makeText(this, "Limpiando exceso de coordenadas", Toast.LENGTH_SHORT).show();
+                //this.clearList();
+            //}
 
             //System.out.println(String.valueOf(locationList.size()));
-            if (samplesManager.getSizeOfMatchedSamples() > 10) {
-                Toast.makeText(this, "Enviando a servidor", Toast.LENGTH_SHORT).show();
+            //if (samplesManager.getSizeOfMatchedSamples() > 10) {
+            //    Toast.makeText(this, "Enviando a servidor", Toast.LENGTH_SHORT).show();
                 //this.makeRequest("hola");
-                locationList.clear();
-            }
+             //   locationList.clear();
+            //}
             lat.setText(String.valueOf(location.getLatitude()));
             lng.setText(String.valueOf(location.getLongitude()));
-            datetime.setText(formattedDate);
+            //datetime.setText(formattedDate);
 
 
             //System.out.println(locationList.size());
-            locationSize.setText(String.valueOf("cant. coordenadas: " + locationList.size()));
-            samplesSize.setText(String.valueOf("cant. muestras: " + samplesManager.getSizeOfSamples()));
-            matchedSize.setText(String.valueOf("cant. matched: " + samplesManager.getSizeOfMatchedSamples()));
+            //locationSize.setText(String.valueOf("cant. coordenadas: " + locationList.size()));
+            //samplesSize.setText(String.valueOf("cant. muestras: " + samplesManager.getSizeOfSamples()));
+            //matchedSize.setText(String.valueOf("cant. matched: " + samplesManager.getSizeOfMatchedSamples()));
         }
     }
 
@@ -580,7 +565,7 @@ public class GPS extends ActionBarActivity implements LocationListener {
         //JSONArray json = new JSONArray(locationList);
 
         Map<String, List> map = new HashMap<>();
-        map.put("samples", samplesManager.getMatchedSamples());
+        //map.put("samples", samplesManager.getMatchedSamples());
 
         JSONObject json = new JSONObject(map);
         return json.toString();
@@ -601,7 +586,7 @@ public class GPS extends ActionBarActivity implements LocationListener {
     // Se limpia la lista de coordenadas. en el futuro la idea es eliminar solo las
     // mas antiguas progresivamente.
     public void clearList() {
-        locationList.clear();
+        //locationList.clear();
 
     }
 
@@ -623,7 +608,7 @@ public class GPS extends ActionBarActivity implements LocationListener {
                 map.put("lng", String.valueOf(RowData[1]));
                 map.put("datetime", String.valueOf(RowData[2]));
 
-                locationList.add(map);
+                //locationList.add(map);
             }
         } catch (IOException ex) {
             ex.printStackTrace();
